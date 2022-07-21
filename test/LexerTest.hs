@@ -12,16 +12,16 @@ import ParseUtils (ErrMsg(..), unwrapped, makeParse)
 
 data TestBase a = TestBase
     { parser :: Parser a
-    , err :: ErrMsg
+    , err    :: ErrMsg
     }
 
 data TestParams a = TestParams
-    { input :: String
+    { input  :: String
     , expect :: a
     }
 
 data TestSettings a = TestSettings
-    { base :: TestBase a
+    { base   :: TestBase a
     , params :: TestParams a
     }
 
@@ -29,10 +29,10 @@ genParserTest :: (Eq a, Show a) => Parser a -> String -> String -> a -> TestTree
 genParserTest parser' err' input' expect' = genParserTest' TestSettings {
       base = TestBase {
             parser = parser'
-          , err = ErrMsg err'
+          , err    = ErrMsg err'
           }
     , params = TestParams {
-            input = input'
+            input  = input'
           , expect = expect'
           }
     }

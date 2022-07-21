@@ -2,7 +2,6 @@
 
 module AST where
 
-import Data.Tree hiding (Tree(..))
 import StringUtils
 import Pretty (Pretty(..))
 
@@ -40,31 +39,30 @@ data Expr
     | Call Name [Expr]
     | Function ExprType Name [Expr] (CodeBlock Expr)
     | BinaryOp String Expr Expr
-    | Return Expr
+    | Return (Maybe Expr)
     | If Expr (CodeBlock Expr) (CodeBlock Expr)
     deriving (Eq, Show)
 
 prettifyAST :: Pretty e => [e] -> [String]
-prettifyAST = map (joinLines . prettify)
+prettifyAST  = map (joinLines . prettify)
 
 joinedPrettyAST :: Pretty e => [e] -> String
-joinedPrettyAST = joinLines . prettifyAST
-
-instance Pretty term => Pretty (CodeBlock term) where
-    prettify terms = concatMap tabTerm terms
-      where tabTerm t = map (" " ++) (prettify t)
+joinedPrettyAST  = joinLines . prettifyAST
 
 instance Pretty Expr where
     prettify expr = case expr of
-        (Int i) -> [joinSpaces ["Int", show i]]
-        (Float f) -> [joinSpaces ["Float", show f]]
-        (Var name) -> [joinSpaces ["Var", name]]
-        (Def exprType name) -> [joinSpaces ["Def", show exprType, name]]
-        (Block codeBlock) -> smartJoin ("Block {" : prettify codeBlock ++ ["}"])
-        (Call name exprs) -> smartJoin (joinSpaces ["Call", name, "("] : prettify exprs ++ [")"])
-        (Function t name args body) ->
-            joinSpaces ["Function ", show name, show t, "; args", show args, "{"]
-            : prettify body ++ ["}"]
-        (Return expr) -> [joinSpaces ["Return", show expr]] 
-        (BinaryOp op expr1 expr2) -> joinOrSplit (joinOrSplit ["BinaryOp " ++ op] expr1) expr2
-        (If cond thenBlock elseBlock) -> addToLast (joinOrSplit ["If"] cond) " {" ++ prettify thenBlock ++ ["}", "else {"] ++ prettify elseBlock ++ ["}"]
+        (Int i)                       -> [joinSpaces ["Int", show i]]
+        (Float f)                     -> [joinSpaces ["Float", show f]]
+        (Var name)                    -> [joinSpaces ["Var", name]]
+        (Def exprType name)           -> [joinSpaces ["Def", show exprType, name]]
+        (Block codeBlock)             -> smartJoin ("Block {" : prettify codeBlock ++ ["}"])
+        (Call name exprs)             -> smartJoin (joinSpaces ["Call", name, "("] : prettify exprs ++ [")"])
+        (Function t name args body)   -> header : prettify body ++ ["}"]
+          where
+            header = joinSpaces ["Function ", show name, show t, "; args", show args, "{"]
+        (Return e)                    -> [joinSpaces ["Return", show e]]
+        (BinaryOp op expr1 expr2)     -> joinOrSplit (joinOrSplit ["BinaryOp " ++ op] expr1) expr2
+        (If cond thenBlock elseBlock) -> header ++ blocks
+          where
+            header = addToLast (joinOrSplit ["If"] cond) " {"
+            blocks = prettify thenBlock ++ ["}", "else {"] ++ prettify elseBlock ++ ["}"]

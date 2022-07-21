@@ -11,15 +11,15 @@ module ParseUtils
 
 import Text.Parsec (parse, ParseError)
 import Text.Parsec.String (Parser)
-  
-newtype ErrMsg = ErrMsg String
-unErr :: ErrMsg -> String
-unErr (ErrMsg s) = s
+
+newtype  ErrMsg     =  ErrMsg String
+unErr :: ErrMsg     -> String
+unErr    (ErrMsg s) =  s
 
 unwrap :: ErrMsg -> Either ParseError a -> a
 unwrap err x = case x of
-  Right r -> r
-  Left _ -> error $ unErr err
+  Right r    -> r
+  Left _     -> error $ unErr err
 
 unwrapped :: ErrMsg -> (String -> Either ParseError a) -> String -> a
 unwrapped err parser = unwrap err . parser
