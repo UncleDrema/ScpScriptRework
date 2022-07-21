@@ -38,11 +38,12 @@ data Expr
     | Def ExprType Name
     | Block (CodeBlock Expr)
     | Call Name [Expr]
-    | Function ExprType Name [Expr] (Maybe Name) (CodeBlock Expr)
+    | Function ExprType Name [Expr] (CodeBlock Expr)
     | BinaryOp String Expr Expr
+    | Return Expr
     | If Expr (CodeBlock Expr) (CodeBlock Expr)
     deriving (Eq, Show)
-    
+
 prettifyAST :: Pretty e => [e] -> [String]
 prettifyAST = map (joinLines . prettify)
 
@@ -61,8 +62,9 @@ instance Pretty Expr where
         (Def exprType name) -> [joinSpaces ["Def", show exprType, name]]
         (Block codeBlock) -> smartJoin ("Block {" : prettify codeBlock ++ ["}"])
         (Call name exprs) -> smartJoin (joinSpaces ["Call", name, "("] : prettify exprs ++ [")"])
-        (Function t name args ret body) ->
-            joinSpaces ["Function ", show name, show t, "; args", show args, "; returns", show ret, "{"]
+        (Function t name args body) ->
+            joinSpaces ["Function ", show name, show t, "; args", show args, "{"]
             : prettify body ++ ["}"]
+        (Return expr) -> [joinSpaces ["Return", show expr]] 
         (BinaryOp op expr1 expr2) -> joinOrSplit (joinOrSplit ["BinaryOp " ++ op] expr1) expr2
         (If cond thenBlock elseBlock) -> addToLast (joinOrSplit ["If"] cond) " {" ++ prettify thenBlock ++ ["}", "else {"] ++ prettify elseBlock ++ ["}"]

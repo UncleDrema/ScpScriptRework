@@ -41,7 +41,9 @@ expr = Ex.buildExpressionParser binops factor
 factor :: Parser Expr
 factor = try block
       <|> try function
+      <|> try funcReturn
       <|> try int
+      <|> try float'
       <|> try call
       <|> try definition
       <|> try variable
@@ -79,6 +81,9 @@ exprType =
 int :: Parser Expr
 int = Int <$> integer
 
+float' :: Parser Expr
+float' = Float <$> float
+
 variable :: Parser Expr
 variable = Var <$> identifier
 
@@ -102,20 +107,26 @@ function = do
   funcType <- exprType
   name <- identifier
   args <- parens $ commaSep definition
-  mReturns <- optionMaybe $ do
-    reserved "returns"
-    id <- identifier
-    return id
   body <- do
     reserved "="
     block' <- optionMaybe codeBlock
     case block' of
       Just codeBlock' -> return codeBlock'
-      Nothing -> do
-        e <- expr
-        return [e]
-  return $ Function funcType name args mReturns body
-  
+      Nothing ->
+        case funcType of
+          VoidType -> do
+             e <- expr
+             return [e]
+          _ -> do
+             e <- funcReturn
+             return [e]
+  return $ Function funcType name args body
+
+funcReturn :: Parser Expr
+funcReturn = do
+  reserved "return"
+  Return <$> expr
+
 call :: Parser Expr
 call = do
   name <- identifier
@@ -132,7 +143,7 @@ ifelse = do
     code <- codeBlock
     return code
   return $ If cond tr (fromMaybe [] fl)
-  
+
 parseExpr :: String -> Either ParseError Expr
 parseExpr = parse (contents expr) "<stdin>"
 
