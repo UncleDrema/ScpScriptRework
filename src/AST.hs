@@ -1,7 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module AST
-  () where
+module AST where
 
 import Data.Tree hiding (Tree(..))
 import StringUtils
@@ -16,6 +15,7 @@ data ExprType
     | FloatType
     | VoidType
     | BooleanType
+    | AutoType
     | CallableType [ExprType] ExprType
     deriving (Eq)
 
@@ -24,6 +24,7 @@ instance Show ExprType where
   show FloatType = "float"
   show VoidType = "void"
   show BooleanType = "bool"
+  show AutoType = "auto"
   show (CallableType args ret) = "(" ++ argsRepr ++ " -> " ++ show ret ++ ")"
     where
       argsRepr = case args of
@@ -41,6 +42,12 @@ data Expr
     | BinaryOp String Expr Expr
     | If Expr (CodeBlock Expr) (CodeBlock Expr)
     deriving (Eq, Show)
+    
+prettifyAST :: Pretty e => [e] -> [String]
+prettifyAST = map (joinLines . prettify)
+
+joinedPrettyAST :: Pretty e => [e] -> String
+joinedPrettyAST = joinLines . prettifyAST
 
 instance Pretty term => Pretty (CodeBlock term) where
     prettify terms = concatMap tabTerm terms

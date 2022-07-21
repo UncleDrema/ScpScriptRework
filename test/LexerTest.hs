@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module ParserTest
+module LexerTest
   (
     genParserTest
   ) where
@@ -8,28 +8,13 @@ module ParserTest
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (testCase, (@?=))
 import Text.Parsec.String (Parser)
-import Text.Parsec (parse, ParseError)
-
-newtype ErrMsg = ErrMsg String
-unErr :: ErrMsg -> String
-unErr (ErrMsg s) = s
-
-unwrap :: ErrMsg -> Either ParseError a -> a
-unwrap err x = case x of
-  Right r -> r
-  Left _ -> error $ unErr err
-
-makeParse :: Parser a -> (String -> Either ParseError a)
-makeParse parser = parse parser "Test"
-
-unwrapped :: ErrMsg -> (String -> Either ParseError a) -> String -> a
-unwrapped err parser = unwrap err . parser
+import ParseUtils (ErrMsg(..), unwrapped, makeParse)
 
 data TestBase a = TestBase
     { parser :: Parser a
     , err :: ErrMsg
     }
-    
+
 data TestParams a = TestParams
     { input :: String
     , expect :: a
@@ -48,13 +33,13 @@ genParserTest parser' err' input' expect' = genParserTest' TestSettings {
           }
     , params = TestParams {
             input = input'
-          , expect = expect'          
+          , expect = expect'
           }
     }
 
 
 genParserTest' :: (Eq a, Show a) => TestSettings a -> TestTree
 genParserTest' TestSettings{base = TestBase{..}, params = TestParams{..}} =
-    testCase ("Parsing \"" <> input <> "\"" <> " equals \"" <> show expect <> "\"") $ res @?= expect
+    testCase ("Lexing \"" <> input <> "\"" <> " equals \"" <> show expect <> "\"") $ res @?= expect
       where
-        res = unwrapped err (makeParse parser) input
+        res = unwrapped err (makeParse "Test" parser) input

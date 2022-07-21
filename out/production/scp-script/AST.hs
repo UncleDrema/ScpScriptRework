@@ -1,7 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module AST
-  () where
+module AST where
 
 import Data.Tree hiding (Tree(..))
 import StringUtils
@@ -41,6 +40,12 @@ data Expr
     | BinaryOp String Expr Expr
     | If Expr (CodeBlock Expr) (CodeBlock Expr)
     deriving (Eq, Show)
+    
+prettifyAST :: Pretty e => [e] -> [String]
+prettifyAST = map (joinLines . prettify)
+
+joinedPrettyAST :: Pretty e => [e] -> String
+joinedPrettyAST = joinLines . prettifyAST
 
 instance Pretty term => Pretty (CodeBlock term) where
     prettify terms = concatMap tabTerm terms

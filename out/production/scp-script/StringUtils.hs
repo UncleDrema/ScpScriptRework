@@ -25,6 +25,7 @@ smartJoin strs = if sum (map length strs) < 40
   then [joinSpaces (filter (not . null) $ map (dropWhile isSpace) strs)]
   else strs
 
+-- idk how that works, so no tests now
 joinOrSplit :: Pretty a => [String] -> a -> [String]
 joinOrSplit s e = case prettify e of
   [r] ->  addToLast s (" (" ++ r ++ ")")

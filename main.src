@@ -1,0 +1,10 @@
+int main(int f) returns i = {
+    int i = 0;
+    if (i < 1) {
+        0;
+    }
+    else {
+         1;
+    };
+};
+

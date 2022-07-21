@@ -27,6 +27,8 @@ library
   exposed-modules:
       AST
       Lexer
+      Parser
+      ParseUtils
       Pretty
       StringUtils
   other-modules:
@@ -57,7 +59,7 @@ test-suite scp-script-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      ParserTest
+      LexerTest
       Paths_scp_script
   hs-source-dirs:
       test

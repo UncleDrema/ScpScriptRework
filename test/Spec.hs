@@ -1,8 +1,8 @@
 import Test.Tasty (defaultMain, testGroup, TestTree)
 import Lexer (sumParser)
-import ParserTest (genParserTest)
+import LexerTest (genParserTest)
 import Test.Tasty.HUnit (testCase, (@?=))
-import StringUtils (join, addToLast, smartJoin, joinOrSplit)
+import StringUtils (join, addToLast, smartJoin)
 
 main :: IO ()
 main = defaultMain unitTests
@@ -11,13 +11,13 @@ unitTests :: TestTree
 unitTests =
   testGroup
     "Unit tests"
-    [ parseTests
+    [ lexTests
     , utilsTests
     ]
 
 
 sumTest :: String -> Integer -> TestTree
-sumTest = genParserTest sumParser "Sum parsing error!"
+sumTest = genParserTest sumParser "Sum lexing error!"
 
 utilsTests :: TestTree
 utilsTests = testGroup "StringUtils tests"
@@ -42,8 +42,8 @@ utilsTests = testGroup "StringUtils tests"
         ]
     ]
 
-parseTests :: TestTree
-parseTests = testGroup "Parsing tests"
+lexTests :: TestTree
+lexTests = testGroup "Lexing tests"
     [ sumTest "5 +3" 8
     , sumTest "-5+ 5" 0
     , sumTest "0+0" 0

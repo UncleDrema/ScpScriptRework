@@ -1,8 +1,8 @@
 import Test.Tasty (defaultMain, testGroup, TestTree)
 import Lexer (sumParser)
-import ParserTest (genParserTest)
+import LexerTest (genParserTest)
 import Test.Tasty.HUnit (testCase, (@?=))
-import StringUtils (join, addToLast, smartJoin, joinOrSplit)
+import StringUtils (join, addToLast, smartJoin)
 
 main :: IO ()
 main = defaultMain unitTests
@@ -11,13 +11,13 @@ unitTests :: TestTree
 unitTests =
   testGroup
     "Unit tests"
-    [ parseTests
+    [ lexTests
     , utilsTests
     ]
 
 
 sumTest :: String -> Integer -> TestTree
-sumTest = genParserTest sumParser "Sum parsing error!"
+sumTest = genParserTest sumParser "Sum lexing error!"
 
 utilsTests :: TestTree
 utilsTests = testGroup "StringUtils tests"
@@ -35,15 +35,15 @@ utilsTests = testGroup "StringUtils tests"
     , testGroup "smartJoin tests" [
           testCase "joining len <40 no white" $ smartJoin ["hey", "hello", "what?"] @?= ["hey hello what?"]
         , testCase "joining len <40 has white" $ smartJoin ["hey", "  ", "hello", "", "what?"] @?= ["hey hello what?"]
-        , testCase "joining len > 40 no white" 
+        , testCase "joining len > 40 no white"
             $ smartJoin [replicate 20 'f', "hey", replicate 30 'g'] @?= [replicate 20 'f', "hey", replicate 30 'g']
-        , testCase "joining len > 40 no white" 
+        , testCase "joining len > 40 no white"
             $ smartJoin [replicate 20 'f', "  ", "hey", replicate 30 'g'] @?= [replicate 20 'f', "  ", "hey", replicate 30 'g']
         ]
     ]
 
-parseTests :: TestTree
-parseTests = testGroup "Parsing tests"
+lexTests :: TestTree
+lexTests = testGroup "Lexing tests"
     [ sumTest "5 +3" 8
     , sumTest "-5+ 5" 0
     , sumTest "0+0" 0
