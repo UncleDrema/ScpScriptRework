@@ -3,9 +3,9 @@
 module Parser where
 
 import Data.Maybe
+import Data.Functor.Identity (Identity)
 import Text.Parsec
 import Text.Parsec.String (Parser)
-import Control.Applicative ((<$>))
 
 import qualified Text.Parsec.Expr as Ex
 import qualified Text.Parsec.Token as Tok
@@ -20,28 +20,35 @@ op = do
   whitespace
   return o
 
-binary s assoc = Ex.Infix (reservedOp s >> return (BinaryOp s)) assoc
+binary :: String -> Ex.Assoc -> Ex.Operator String () Identity Expr
+binary s = Ex.Infix (reservedOp s >> return (BinaryOp s))
 
+opList :: (t -> Ex.Assoc -> a) -> [t] -> [a]
 opList arity = opList'
-	where
-    opList' [op] = [arity op Ex.AssocLeft]
-    opList' (op:ops) = arity op Ex.AssocLeft : opList' ops
+  where
+    opList' []           = []
+    opList' [oper]       = [arity oper Ex.AssocLeft]
+    opList' (oper:opers) = arity oper Ex.AssocLeft : opList' opers
 
+binList :: [String] -> [Ex.Operator String () Identity Expr]
 binList = opList binary
 
+binops :: [[Ex.Operator String () Identity Expr]]
 binops = [
-  binList ["*", "/", "//", "%"]
+    binList ["*", "/", "//", "%"]
   , binList ["+", "-"]
   , binList ["<", "=", "<=", ">=", "==", "!="]
-	]
+  ]
 
 expr :: Parser Expr
-expr = Ex.buildExpressionParser binops factor
+expr  = Ex.buildExpressionParser binops factor
 
 factor :: Parser Expr
-factor = try block
+factor  = try block
       <|> try function
+      <|> try funcReturn
       <|> try int
+      <|> try float'
       <|> try call
       <|> try definition
       <|> try variable
@@ -56,84 +63,93 @@ contents p = do
   return r
 
 toplevel :: Parser [Expr]
-toplevel = many $ do
-  def <- function
+toplevel  = many $ do
+  def    <- function
   reservedOp ";"
   return def
 
 exprType :: Parser ExprType
-exprType =
+exprType  =
   try ( do
     typeID <- identifier
     return $ case typeID of
-      "int" -> IntType
+      "int"   -> IntType
       "float" -> FloatType
-      "void" -> VoidType
-      "bool" -> BooleanType)
+      "void"  -> VoidType
+      "bool"  -> BooleanType
+      _       -> AutoType)
   <|> try ( parens $ do
     fromTypes <- commaSep exprType
     reserved "->"
     CallableType fromTypes <$> exprType )
 
 int :: Parser Expr
-int = Int <$> integer
+int  = Int <$> integer
+
+float' :: Parser Expr
+float'  = Float <$> float
 
 variable :: Parser Expr
-variable = Var <$> identifier
+variable  = Var <$> identifier
 
 definition :: Parser Expr
-definition = do
-  varType <- exprType
+definition  = do
+  varType     <- exprType
   whitespace
   Def varType <$> identifier
 
 codeBlock :: Parser [Expr]
-codeBlock = braces $ many $
+codeBlock  = braces $ many
   do e <- expr
      reserved ";"
      return e
 
 block :: Parser Expr
-block = Block <$> codeBlock
+block  = Block <$> codeBlock
 
 function :: Parser Expr
-function = do
+function  = do
   funcType <- exprType
-  name <- identifier
-  args <- parens $ commaSep definition
-  mReturns <- optionMaybe $ do
-    reserved "returns"
-    id <- identifier
-    return id
-  body <- do
+  name     <- identifier
+  args     <- parens $ commaSep definition
+  body     <- do
     reserved "="
-    block' <- optionMaybe codeBlock
+    block'   <- optionMaybe codeBlock
     case block' of
       Just codeBlock' -> return codeBlock'
-      Nothing -> do
-        e <- expr
-        return [e]
-  return $ Function funcType name args mReturns body
-  
+      Nothing ->
+        case funcType of
+          VoidType -> do
+             e <- expr
+             return [e]
+          _ -> do
+             e <- funcReturn
+             return [e]
+  return $ Function funcType name args body
+
+funcReturn :: Parser Expr
+funcReturn  = do
+  reserved "return"
+  Return  <$> optionMaybe expr
+
 call :: Parser Expr
-call = do
-  name <- identifier
-  args <- parens $ commaSep expr
+call  = do
+  name   <- identifier
+  args   <- parens $ commaSep expr
   return $ Call name args
 
 ifelse :: Parser Expr
-ifelse = do
+ifelse  = do
   reserved "if"
   cond <- parens expr
-  tr <- codeBlock
-  fl <- optionMaybe $ do
+  tr   <- codeBlock
+  fl   <- optionMaybe $ do
     reserved "else"
-    code <- codeBlock
-    return code
+    codeBlock
   return $ If cond tr (fromMaybe [] fl)
-  
+
 parseExpr :: String -> Either ParseError Expr
-parseExpr = parse (contents expr) "<stdin>"
+parseExpr  = parse (contents expr) "<stdin>"
 
 parseCode :: String -> Either ParseError AST
-parseCode = parse (contents toplevel) "<stdin>"
+parseCode  = parse (contents toplevel) "<stdin>"
