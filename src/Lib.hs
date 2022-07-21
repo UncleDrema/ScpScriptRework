@@ -1,23 +1,46 @@
 module Lib
-  ( double
-  , half
-  , someFunc
-  , nothing
+  (
+  sumParser
   ) where
 
-compose :: (x -> y) -> (y -> z) -> x -> z
-compose f g x =
-  g (f x)
+import Text.Parsec (parse, ParseError)
+import Text.Parsec.String (Parser)
+import Text.Parsec.Language (emptyDef)
+import qualified Text.Parsec.Token as Tok
 
 
-double :: Num a => a -> a
-double = (* 2)
+lexer :: Tok.TokenParser ()
+lexer = Tok.makeTokenParser style
+  where
+    ops = ["*", "-", "*", "/"]
+    names = ["if", "else"]
+    style = emptyDef {
+      Tok.commentLine = "//"
+    , Tok.commentStart = "/*"
+    , Tok.commentEnd = "*/"
+    , Tok.caseSensitive = True
+    , Tok.reservedNames = names
+    , Tok.reservedOpNames = ops
+    }
 
-half :: Integral a => a -> a
-half x = x `div` 2
+integer :: Parser Integer
+integer = Tok.integer lexer
+float :: Parser Double
+float = Tok.float lexer
+identifier :: Parser String
+identifier = Tok.identifier lexer
+reservedOp :: String -> Parser ()
+reservedOp = Tok.reservedOp lexer
 
-nothing :: Integer -> Integer
-nothing = compose double half
+sumParser :: Parser Integer
+sumParser = do
+  first <- integer
+  reservedOp "+"
+  second <- integer
+  return (first + second)
+  
+parseSum :: String -> Either ParseError Integer
+parseSum = parse sumParser ""
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+getParseSum :: Parser Integer -> (String -> Either ParseError Integer)
+getParseSum intParser = parse intParser ""

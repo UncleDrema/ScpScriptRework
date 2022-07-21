@@ -1,24 +1,29 @@
-import Test.Tasty (defaultMain, testGroup)
-import Test.Tasty.HUnit (assertEqual, testCase)
-import Lib (double, half, nothing)
+{-# LANGUAGE FlexibleInstances #-}
+
+import Test.Tasty (defaultMain, testGroup, TestTree)
+import Test.Tasty.HUnit (testCase, (@?=))
+import Lib (sumParser)
+import Text.Parsec.String (Parser)
+import Text.Parsec (parse, ParseError)
+import ParserTest (genParserTest)
 
 main :: IO ()
 main = defaultMain unitTests
 
+unitTests :: TestTree
 unitTests =
   testGroup
     "Unit tests"
-    (doublingMakesNumbersBigger
-    ++ halvingMakesNumbersSmaller 
-    ++ nothingIsNothing)
+    [parseTests]
 
-doublingMakesNumbersBigger =
-  [testCase "Double of 4 is 8" $ assertEqual [] 8 (double 4)]
-
-halvingMakesNumbersSmaller =
-  [testCase "Half of 9 is 4" $ assertEqual [] 4 (half 9)]
   
-nothingIsNothing =
-  [ testCase "Not changed 5" $ assertEqual [] 5 (nothing 5)
-  , testCase "Not changed 8" $ assertEqual [] 8 (nothing 8)
-  ]
+sumTest :: String -> Integer -> TestTree
+sumTest = genParserTest sumParser "Sum parsing error!"
+
+parseTests :: TestTree
+parseTests = testGroup "Parsing tests"
+    [ sumTest "5 +3" 8
+    , sumTest "-5+ 5" 0
+    , sumTest "0+0" 0
+    , sumTest "-1 + -2" (-3)
+    ]
