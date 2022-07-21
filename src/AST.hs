@@ -28,7 +28,7 @@ instance Show ExprType where
     where
       argsRepr = case args of
         [] -> "()"
-        args' -> joinArgs (map show args')
+        args' -> joinComma (map show args')
 
 data Expr
     = Int Integer

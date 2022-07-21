@@ -11,8 +11,8 @@ join a xs = foldr1 concat' xs
   where
     concat' b c = b ++ a ++ c
 
-joinArgs   :: [String] -> String
-joinArgs    = join ", "
+joinComma   :: [String] -> String
+joinComma    = join ", "
 joinLines  :: [String] -> String
 joinLines   = join "\n"
 joinSpaces :: [String] -> String

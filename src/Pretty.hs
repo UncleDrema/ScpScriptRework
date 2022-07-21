@@ -14,7 +14,7 @@ class Show e => Pretty e where
 newtype ByShow s = BS { unBS :: s }
 instance Show (ByShow s) => Pretty (ByShow s) where
     prettify sh = [show sh]
-    
+
 instance Show (ByShow String) where
     show bs = unBS bs
 

@@ -1,7 +1,6 @@
 module ParseUtils
   (
     ErrMsg(..),
-    unErr,
     unwrap,
     unwrapped,
     makeParse,
@@ -12,9 +11,7 @@ module ParseUtils
 import Text.Parsec (parse, ParseError)
 import Text.Parsec.String (Parser)
 
-newtype  ErrMsg     =  ErrMsg String
-unErr :: ErrMsg     -> String
-unErr    (ErrMsg s) =  s
+newtype  ErrMsg     =  ErrMsg {unErr :: String}
 
 unwrap :: ErrMsg -> Either ParseError a -> a
 unwrap err x = case x of

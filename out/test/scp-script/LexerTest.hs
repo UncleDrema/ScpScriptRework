@@ -8,7 +8,7 @@ module LexerTest
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (testCase, (@?=))
 import Text.Parsec.String (Parser)
-import ParseUtils (ErrMsg(..), unwrapped, makeParse)
+import ParseUtils (ErrMsg(..), runParser)
 
 data TestBase a = TestBase
     { parser :: Parser a
@@ -40,6 +40,6 @@ genParserTest parser' err' input' expect' = genParserTest' TestSettings {
 
 genParserTest' :: (Eq a, Show a) => TestSettings a -> TestTree
 genParserTest' TestSettings{base = TestBase{..}, params = TestParams{..}} =
-    testCase ("Lexing \"" <> input <> "\"" <> " equals \"" <> show expect <> "\"") $ res @?= expect
+    testCase (show ("Lexing '" <> input <> "'" <> " equals '" <> show expect <> "'")) $ res @?= expect
       where
-        res = unwrapped err (makeParse "Test" parser) input
+        res = runParser "Test" err parser input
