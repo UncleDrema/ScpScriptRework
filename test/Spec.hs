@@ -1,8 +1,8 @@
 import Test.Tasty (defaultMain, testGroup, TestTree)
-import Lib (sumParser)
+import Lexer (sumParser)
 import ParserTest (genParserTest)
 import Test.Tasty.HUnit (testCase, (@?=))
-import Utils (join)
+import StringUtils (join)
 
 main :: IO ()
 main = defaultMain unitTests
@@ -20,7 +20,7 @@ sumTest :: String -> Integer -> TestTree
 sumTest = genParserTest sumParser "Sum parsing error!"
 
 utilsTests :: TestTree
-utilsTests = testGroup "Utils tests"
+utilsTests = testGroup "StringUtils tests"
     [
       testCase "Join for comma and space separated data" $ join ", " ["a", "b", "c"] @?= "a, b, c"
     , testCase "Join for empty separator" $ join "" ["a", "b", "c"] @?= "abc"

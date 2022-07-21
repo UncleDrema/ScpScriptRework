@@ -1,7 +1,4 @@
-module Lib
-  (
-  sumParser
-  ) where
+module Lexer where
 
 import Text.Parsec (parse, ParseError)
 import Text.Parsec.String (Parser)
@@ -38,9 +35,3 @@ sumParser = do
   reservedOp "+"
   second <- integer
   return (first + second)
-  
-parseSum :: String -> Either ParseError Integer
-parseSum = parse sumParser ""
-
-getParseSum :: Parser Integer -> (String -> Either ParseError Integer)
-getParseSum intParser = parse intParser ""

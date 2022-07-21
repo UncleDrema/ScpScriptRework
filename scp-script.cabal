@@ -26,8 +26,9 @@ source-repository head
 library
   exposed-modules:
       AST
-      Lib
-      Utils
+      Lexer
+      Pretty
+      StringUtils
   other-modules:
       Paths_scp_script
   hs-source-dirs:
