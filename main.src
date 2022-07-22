@@ -1,17 +1,9 @@
-int main(int a, int b) = {
-    int i = next();
-    if (i < 1) {
-        print(0);
-    }
-    else {
-         print(1);
-    };
-    
-    int foo(int c) = {
-    	c = 3 + a + b * 2;
-    	return a;
-    };
+void main() = {
+   print(change(doub, 5));
+}
 
-    return;
-};
+int change((int -> int) some, int num) = return some(num);
 
+int doub(int num) = return num * 2;
+
+int provide() = return 5;

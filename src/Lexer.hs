@@ -9,8 +9,8 @@ import qualified Text.Parsec.Token as Tok
 lexer :: Tok.TokenParser ()
 lexer = Tok.makeTokenParser style
   where
-    ops               = ["*", "-", "+", "/", ";"]
-    names             = ["if", "else", "return"]
+    ops               = ["*", "-", "+", "/", "=", "=="]
+    names             = types ++ keywords ++ punctuation
     style             = emptyDef {
       Tok.commentLine     = "//"
     , Tok.commentStart    = "/*"
@@ -19,6 +19,9 @@ lexer = Tok.makeTokenParser style
     , Tok.reservedNames   = names
     , Tok.reservedOpNames = ops
     }
+    types = ["int", "void", "bool", "float"]
+    keywords = ["if", "else", "return", "->"]
+    punctuation = [";", ",", "{", "}", "(", ")"]
 
 
 integer     :: Parser Integer
@@ -41,6 +44,8 @@ whitespace  :: Parser ()
 whitespace   = Tok.whiteSpace lexer
 reserved    :: String -> Parser ()
 reserved     = Tok.reserved lexer
+string      :: Parser String
+string       = Tok.stringLiteral lexer
 
 sumParser :: Parser Integer
 sumParser = do

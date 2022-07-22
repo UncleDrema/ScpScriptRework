@@ -41,6 +41,13 @@ utilsTests  = testGroup "StringUtils tests"
         , testCase "joining len > 40 no white"
             $ smartJoin [replicate 20 'f', "  ", "hey", replicate 30 'g'] @?= [replicate 20 'f', "  ", "hey", replicate 30 'g']
         ]
+    , testGroup "joinOrSplit tests" [
+          testCase "Adding one to empty" $ joinOrSplit [] (BS "braces") @?= ["(braces)"]
+        , testCase "Adding to one elem" $ joinOrSplit ["yes"] (BS "no") @?= ["yes (no)"]
+        , testCase "Adding to >1 elems" $ joinOrSplit ["hmm", "yes"] (BS "no") @?= ["hmm", "yes (no)"]
+        , testCase "Adding list to empty" $ joinOrSplit [] (map BS ["ab", "bc", "cd"]) @?= ["(", " ab", " bc", " cd", ")"]
+        , testCase "Adding list to >1 elem" $ joinOrSplit ["oh", "yes"] (map BS ["ab", "bc", "cd"]) @?= ["oh", "yes (", " ab", " bc", " cd", ")"]
+        ]
     ]
     
 sumTest :: String -> Integer -> TestTree

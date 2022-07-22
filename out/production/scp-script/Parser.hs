@@ -45,15 +45,17 @@ expr  = Ex.buildExpressionParser binops factor
 
 factor :: Parser Expr
 factor  = try block
-      <|> try function
-      <|> try funcReturn
-      <|> try int
-      <|> try float'
-      <|> try call
-      <|> try definition
-      <|> try variable
-      <|> try ifelse
-      <|> parens expr
+       <|> try unsafe
+       <|> try function
+       <|> try funcReturn
+       <|> try int
+       <|> try float'
+       <|> try string'
+       <|> try call
+       <|> try definition
+       <|> try variable
+       <|> try ifelse
+       <|> parens expr
 
 contents :: Parser a -> Parser a
 contents p = do
@@ -64,30 +66,51 @@ contents p = do
 
 toplevel :: Parser [Expr]
 toplevel  = many $ do
-  def    <- function
-  reservedOp ";"
-  return def
+  function
 
 exprType :: Parser ExprType
-exprType  =
-  try ( do
-    typeID <- identifier
-    return $ case typeID of
-      "int"   -> IntType
-      "float" -> FloatType
-      "void"  -> VoidType
-      "bool"  -> BooleanType
-      _       -> AutoType)
-  <|> try ( parens $ do
+exprType
+   =  try intT
+  <|> try floatT
+  <|> try voidT
+  <|> try boolT
+  <|> try funcT
+
+funcT :: Parser ExprType
+funcT = parens $ do
     fromTypes <- commaSep exprType
     reserved "->"
-    CallableType fromTypes <$> exprType )
+    CallableType fromTypes <$> exprType
+
+
+intT :: Parser ExprType
+intT = do
+  _ <- reserved "int"
+  return IntType
+
+floatT :: Parser ExprType
+floatT = do
+  _ <- reserved "int"
+  return IntType
+
+voidT :: Parser ExprType
+voidT = do
+  _ <- reserved "int"
+  return IntType
+
+boolT :: Parser ExprType
+boolT = do
+  _ <- reserved "int"
+  return IntType
 
 int :: Parser Expr
 int  = Int <$> integer
 
 float' :: Parser Expr
 float'  = Float <$> float
+
+string' :: Parser Expr
+string'  = String <$> Lexer.string
 
 variable :: Parser Expr
 variable  = Var <$> identifier
@@ -103,6 +126,20 @@ codeBlock  = braces $ many
   do e <- expr
      reserved ";"
      return e
+
+unsafe :: Parser Expr
+unsafe  = do
+  reserved "unsafe"
+  Unsafe <$> braces lines'
+    where
+      line = many (noneOf "\n{}")
+      lines' = do
+        x <- line
+        xs <- many $ do
+          newline
+          line
+        return (x:xs)
+
 
 block :: Parser Expr
 block  = Block <$> codeBlock

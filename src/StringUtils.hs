@@ -11,8 +11,8 @@ join a xs = foldr1 concat' xs
   where
     concat' b c = b ++ a ++ c
 
-joinComma   :: [String] -> String
-joinComma    = join ", "
+joinComma  :: [String] -> String
+joinComma   = join ", "
 joinLines  :: [String] -> String
 joinLines   = join "\n"
 joinSpaces :: [String] -> String
@@ -30,8 +30,13 @@ smartJoin strs = if sum (map length strs) < 40
   then [joinSpaces (filter (not . null) $ map (dropWhile isSpace) strs)]
   else strs
 
--- idk how that works, so no tests now
+-- ident list of something
 joinOrSplit :: Pretty a => [String] -> a -> [String]
-joinOrSplit s e = case prettify e of
-  [r]   -> addToLast s (" (" ++ r ++ ")")
-  listR -> addToLast s " (" ++ ["  " ++ r' | r' <- listR] ++ [")"]
+joinOrSplit s e = 
+  let ident = case s of
+                [] -> ""
+                [""] -> ""
+                _ -> " "
+    in case prettify e of
+      [r]   -> addToLast s (ident ++ "(" ++ r ++ ")")
+      listR -> addToLast s (ident ++ "(") ++ listR ++ [")"]

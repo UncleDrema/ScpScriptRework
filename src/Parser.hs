@@ -44,16 +44,17 @@ expr :: Parser Expr
 expr  = Ex.buildExpressionParser binops factor
 
 factor :: Parser Expr
-factor  = try block
-      <|> try function
-      <|> try funcReturn
-      <|> try int
-      <|> try float'
-      <|> try call
-      <|> try definition
-      <|> try variable
-      <|> try ifelse
-      <|> parens expr
+factor  =  try block
+       <|> try function
+       <|> try funcReturn
+       <|> try int
+       <|> try float'
+       <|> try string'
+       <|> try call
+       <|> try (definition exprType)
+       <|> try variable
+       <|> try ifelse
+       <|> parens expr
 
 contents :: Parser a -> Parser a
 contents p = do
@@ -64,24 +65,46 @@ contents p = do
 
 toplevel :: Parser [Expr]
 toplevel  = many $ do
-  def    <- function
-  reservedOp ";"
-  return def
+  function
 
 exprType :: Parser ExprType
-exprType  =
-  try ( do
-    typeID <- identifier
-    return $ case typeID of
-      "int"   -> IntType
-      "float" -> FloatType
-      "void"  -> VoidType
-      "bool"  -> BooleanType
-      _       -> AutoType)
-  <|> try ( parens $ do
+exprType
+   =  try funcTypes
+  <|> try voidT
+  
+funcTypes :: Parser ExprType
+funcTypes
+   =  try funcT
+  <|> try floatT
+  <|> try intT
+  <|> try boolT
+
+funcT :: Parser ExprType
+funcT = parens $ do
     fromTypes <- commaSep exprType
     reserved "->"
-    CallableType fromTypes <$> exprType )
+    CallableType fromTypes <$> exprType
+
+
+intT :: Parser ExprType
+intT = do
+  _ <- reserved "int"
+  return IntType
+
+floatT :: Parser ExprType
+floatT = do
+  _ <- reserved "float"
+  return FloatType
+
+voidT :: Parser ExprType
+voidT = do
+  _ <- reserved "void"
+  return VoidType
+
+boolT :: Parser ExprType
+boolT = do
+  _ <- reserved "bool"
+  return BooleanType
 
 int :: Parser Expr
 int  = Int <$> integer
@@ -89,20 +112,23 @@ int  = Int <$> integer
 float' :: Parser Expr
 float'  = Float <$> float
 
+string' :: Parser Expr
+string'  = String <$> Lexer.string
+
 variable :: Parser Expr
 variable  = Var <$> identifier
 
-definition :: Parser Expr
-definition  = do
-  varType     <- exprType
+definition :: Parser ExprType -> Parser Expr
+definition t = do
+  varType <- t
   whitespace
   Def varType <$> identifier
 
-codeBlock :: Parser [Expr]
+codeBlock :: Parser [FinalExpr]
 codeBlock  = braces $ many
   do e <- expr
      reserved ";"
-     return e
+     return $ FE e
 
 block :: Parser Expr
 block  = Block <$> codeBlock
@@ -111,7 +137,7 @@ function :: Parser Expr
 function  = do
   funcType <- exprType
   name     <- identifier
-  args     <- parens $ commaSep definition
+  args     <- parens $ commaSep (definition funcTypes)
   body     <- do
     reserved "="
     block'   <- optionMaybe codeBlock
@@ -121,10 +147,12 @@ function  = do
         case funcType of
           VoidType -> do
              e <- expr
-             return [e]
+             reserved ";"
+             return [FE e]
           _ -> do
              e <- funcReturn
-             return [e]
+             reserved ";"
+             return [FE e]
   return $ Function funcType name args body
 
 funcReturn :: Parser Expr

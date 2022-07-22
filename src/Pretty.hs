@@ -21,3 +21,7 @@ instance Show (ByShow String) where
 instance Pretty term => Pretty [term] where
     prettify terms = concatMap tabTerm terms
       where tabTerm t = map (" " ++) (prettify t)
+      
+instance Pretty term => Pretty (Maybe term) where
+    prettify Nothing = []
+    prettify (Just term) = prettify term

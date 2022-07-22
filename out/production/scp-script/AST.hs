@@ -3,7 +3,7 @@
 module AST where
 
 import StringUtils
-import Pretty (Pretty(..))
+import Pretty
 
 type Name = String
 type CodeBlock term = [term]
@@ -14,7 +14,7 @@ data ExprType
     | FloatType
     | VoidType
     | BooleanType
-    | AutoType
+    | StringType
     | CallableType [ExprType] ExprType
     deriving (Eq)
 
@@ -23,7 +23,7 @@ instance Show ExprType where
   show FloatType = "float"
   show VoidType = "void"
   show BooleanType = "bool"
-  show AutoType = "auto"
+  show StringType = "string"
   show (CallableType args ret) = "(" ++ argsRepr ++ " -> " ++ show ret ++ ")"
     where
       argsRepr = case args of
@@ -34,6 +34,7 @@ data Expr
     = Int Integer
     | Float Double
     | Var Name
+    | String String
     | Def ExprType Name
     | Block (CodeBlock Expr)
     | Call Name [Expr]
@@ -41,6 +42,7 @@ data Expr
     | BinaryOp String Expr Expr
     | Return (Maybe Expr)
     | If Expr (CodeBlock Expr) (CodeBlock Expr)
+    | Unsafe [String]
     deriving (Eq, Show)
 
 prettifyAST :: Pretty e => [e] -> [String]
@@ -49,11 +51,14 @@ prettifyAST  = map (joinLines . prettify)
 joinedPrettyAST :: Pretty e => [e] -> String
 joinedPrettyAST  = joinLines . prettifyAST
 
+--  Pretty big
 instance Pretty Expr where
     prettify expr = case expr of
         (Int i)                       -> [joinSpaces ["Int", show i]]
         (Float f)                     -> [joinSpaces ["Float", show f]]
+        (String s)                    -> [joinSpaces ["String", show s]]
         (Var name)                    -> [joinSpaces ["Var", name]]
+        (Unsafe unString)             -> [joinSpaces ["Unsafe", show (unlines unString)]]
         (Def exprType name)           -> [joinSpaces ["Def", show exprType, name]]
         (Block codeBlock)             -> smartJoin ("Block {" : prettify codeBlock ++ ["}"])
         (Call name exprs)             -> smartJoin (joinSpaces ["Call", name, "("] : prettify exprs ++ [")"])
@@ -66,3 +71,24 @@ instance Pretty Expr where
           where
             header = addToLast (joinOrSplit ["If"] cond) " {"
             blocks = prettify thenBlock ++ ["}", "else {"] ++ prettify elseBlock ++ ["}"]
+--}
+
+{-- Pretty C-like
+instance Pretty Expr where
+    prettify expr = case expr of
+        (Int i)                       -> [joinSpaces [show i]]
+        (Float f)                     -> [joinSpaces [show f]]
+        (Var name)                    -> [joinSpaces [name]]
+        (Def exprType name)           -> [joinSpaces [show exprType, name]]
+        (Block codeBlock)             -> smartJoin ("{" : prettify codeBlock ++ ["}"])
+        (Call name exprs)             -> smartJoin ([name, "("] ++ prettify exprs ++ [")"])
+        (Function t name args body)   -> header : prettify body ++ ["}"]
+          where
+            header = joinSpaces ([show t, show name] ++ ["("] ++ prettify args ++ ["){"])
+        (Return e)                    -> [joinSpaces ("return" : prettify e)]
+        (BinaryOp op expr1 expr2)     -> joinOrSplit (joinOrSplit [] expr1 ++ [op]) expr2
+        (If cond thenBlock elseBlock) -> header ++ blocks 
+          where
+            header = addToLast (joinOrSplit ["if"] cond) " {"
+            blocks = prettify thenBlock ++ ["}", "else {"] ++ prettify elseBlock ++ ["}"]
+--}
