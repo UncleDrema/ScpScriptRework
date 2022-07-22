@@ -43,6 +43,7 @@ data Expr
     = Int Integer
     | Float Double
     | Var Name
+    | Bool Bool
     | String String
     | Def ExprType Name
     | Block (CodeBlock FinalExpr)
@@ -56,10 +57,8 @@ data Expr
     deriving (Eq, Show)
     
 ending :: Expr -> String
-ending (If _ then' _) = case isBlock then' of
-  False -> ";"
-  True -> ""
-ending (While _ _) = ""
+ending (If _ then' _) = if isBlock then' then "" else ";"
+ending (While _ block') = if isBlock block' then "" else ";"
 ending (Block _) = ""
 ending _ = ";"
 
@@ -107,6 +106,7 @@ instance Pretty Expr where
         (Int i)                       -> [show i]
         (Float f)                     -> [show f]
         (Var name)                    -> [name]
+        (Bool b)                      -> [if b == True then "true" else "false"]
         (String s)                    -> [show s]
         (Def exprType name)           -> [joinSpaces [show exprType, name]]
         (Block codeBlock)             -> smartJoin ("{" : prettify codeBlock ++ ["}"])

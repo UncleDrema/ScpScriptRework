@@ -9,7 +9,7 @@ import qualified Text.Parsec.Token as Tok
 lexer :: Tok.TokenParser ()
 lexer = Tok.makeTokenParser style
   where
-    ops               = ["*", "-", "+", "/", "=", "=="]
+    ops               = ["*", "-", "+", "/", "=", "==", "+=", "-=", "*=", "/="]
     names             = types ++ keywords ++ punctuation
     style             = emptyDef {
       Tok.commentLine     = "//"
@@ -22,7 +22,6 @@ lexer = Tok.makeTokenParser style
     types = ["int", "void", "bool", "float"]
     keywords = ["if", "else", "return", "->", "while", "for", "true", "false"]
     punctuation = [";", ",", "{", "}", "(", ")"]
-
 
 integer     :: Parser Integer
 integer      = Tok.integer lexer

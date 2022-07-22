@@ -35,13 +35,15 @@ binList = opList binary
 
 binops :: [[Ex.Operator String () Identity Expr]]
 binops = [
-    binList ["*", "/", "//", "%"]
+    binList ["*", "/", "%"]
   , binList ["+", "-"]
   , binList ["<", ">", "=", "<=", ">=", "==", "!="]
+  , binList ["+=", "-=", "*=", "/="]
   ]
 
 expr :: Parser Expr
 expr  = Ex.buildExpressionParser binops factor
+    
 
 factor :: Parser Expr
 factor  =  try block
@@ -55,6 +57,8 @@ factor  =  try block
        <|> try variable
        <|> try ifelse
        <|> parens expr
+       <|> true
+       <|> false
        <|> while
 
 contents :: Parser a -> Parser a
@@ -112,6 +116,16 @@ int  = Int <$> integer
 
 float' :: Parser Expr
 float'  = Float <$> float
+
+true :: Parser Expr
+true = do
+  reserved "true"
+  return $ Bool True
+  
+false :: Parser Expr
+false = do
+  reserved "false"
+  return $ Bool False
 
 string' :: Parser Expr
 string'  = String <$> Lexer.string
