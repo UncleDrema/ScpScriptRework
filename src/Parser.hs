@@ -37,7 +37,7 @@ binops :: [[Ex.Operator String () Identity Expr]]
 binops = [
     binList ["*", "/", "//", "%"]
   , binList ["+", "-"]
-  , binList ["<", "=", "<=", ">=", "==", "!="]
+  , binList ["<", ">", "=", "<=", ">=", "==", "!="]
   ]
 
 expr :: Parser Expr
@@ -55,6 +55,7 @@ factor  =  try block
        <|> try variable
        <|> try ifelse
        <|> parens expr
+       <|> while
 
 contents :: Parser a -> Parser a
 contents p = do
@@ -127,7 +128,7 @@ definition t = do
 codeBlock :: Parser [FinalExpr]
 codeBlock  = braces $ many
   do e <- expr
-     reserved ";"
+     reserved (ending e)
      return $ FE e
 
 block :: Parser Expr
@@ -140,7 +141,7 @@ function  = do
   args     <- parens $ commaSep (definition funcTypes)
   body     <- do
     reserved "="
-    block'   <- optionMaybe codeBlock
+    block'   <- optionMaybe block
     case block' of
       Just codeBlock' -> return codeBlock'
       Nothing ->
@@ -148,11 +149,11 @@ function  = do
           VoidType -> do
              e <- expr
              reserved ";"
-             return [FE e]
+             return (Block [FE e])
           _ -> do
              e <- funcReturn
              reserved ";"
-             return [FE e]
+             return (Block [FE e])
   return $ Function funcType name args body
 
 funcReturn :: Parser Expr
@@ -170,11 +171,19 @@ ifelse :: Parser Expr
 ifelse  = do
   reserved "if"
   cond <- parens expr
-  tr   <- codeBlock
+  tr   <- expr
   fl   <- optionMaybe $ do
     reserved "else"
-    codeBlock
-  return $ If cond tr (fromMaybe [] fl)
+    try expr
+    <|> try ifelse
+  return $ If cond tr (fromMaybe (Block []) fl)
+  
+while :: Parser Expr
+while = do
+  reserved "while"
+  cond <- parens expr
+  block' <- expr
+  return $ While cond block'
 
 parseExpr :: String -> Either ParseError Expr
 parseExpr  = parse (contents expr) "<stdin>"

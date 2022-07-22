@@ -1,9 +1,8 @@
 void main() = {
-   print(change(doub, 5));
+   int i = next();
+   if (i > 3) {}
+   else if (i == 0) {
+   	print(3);
+   }
+   else print(0);
 }
-
-int change((int -> int) some, int num) = return some(num);
-
-int doub(int num) = return num * 2;
-
-int provide() = return 5;

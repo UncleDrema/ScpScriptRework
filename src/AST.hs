@@ -47,12 +47,26 @@ data Expr
     | Def ExprType Name
     | Block (CodeBlock FinalExpr)
     | Call Name [Expr]
-    | Function ExprType Name [Expr] (CodeBlock FinalExpr)
+    | Function ExprType Name [Expr] Expr
     | BinaryOp String Expr Expr
     | Return (Maybe Expr)
-    | If Expr (CodeBlock FinalExpr) (CodeBlock FinalExpr)
+    | If Expr Expr Expr
     | TopDecl ExprType Name [Expr]
+    | While Expr Expr
     deriving (Eq, Show)
+    
+ending :: Expr -> String
+ending (If _ then' _) = case isBlock then' of
+  False -> ";"
+  True -> ""
+ending (While _ _) = ""
+ending (Block _) = ""
+ending _ = ";"
+
+isBlock :: Expr -> Bool
+isBlock (Block []) = False
+isBlock (Block _) = True
+isBlock _ = False
 
 newtype FinalExpr = FE {unFE :: Expr} deriving (Eq)
 instance Show FinalExpr where
@@ -121,10 +135,7 @@ instance Pretty Expr where
               _ -> ""
         (Function t name args body)   -> header : prettify body ++ ["});"]
           where
-            header = name <> " = new " <> delegate <> args' <> "((" <> vars' <> ") => {"
-            delegate = case t of
-              VoidType -> "Action"
-              _ -> "Func"
+            header = name <> " = " <> args' <> "((" <> vars' <> ") => {"
             cleanArgs = filter (\a -> getType' a /= VoidType) args
             args' = case t of
               VoidType -> case cleanArgs of
@@ -147,7 +158,11 @@ instance Pretty Expr where
         (If cond thenBlock elseBlock) -> header ++ blocks
           where
             header = addToLast (joinOrSplit ["if"] cond) " {"
-            blocks = prettify thenBlock ++ ["}", "else {"] ++ prettify elseBlock ++ ["}"]
+            blocks = prettify thenBlock ++ ["}", "else"] ++ prettify elseBlock
+        (While cond block) -> header ++ block'
+          where
+            header = addToLast (joinOrSplit ["while"] cond) " {"
+            block' = prettify block ++ ["}"]
 --}
 
 {-- Pretty C-like
