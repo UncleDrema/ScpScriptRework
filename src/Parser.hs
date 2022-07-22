@@ -13,13 +13,6 @@ import qualified Text.Parsec.Token as Tok
 import Lexer
 import AST
 
-op :: Parser String
-op = do
-  whitespace
-  o <- operator
-  whitespace
-  return o
-
 binary :: String -> Ex.Assoc -> Ex.Operator String () Identity Expr
 binary s = Ex.Infix (reservedOp s >> return (BinaryOp s))
 
@@ -43,7 +36,7 @@ binops = [
 
 expr :: Parser Expr
 expr  = Ex.buildExpressionParser binops factor
-    
+
 
 factor :: Parser Expr
 factor  =  try block
@@ -77,7 +70,7 @@ exprType
    =  try funcTypes
   <|> try voidT
   <|> try varT
-  
+
 funcTypes :: Parser ExprType
 funcTypes
    =  try funcT
@@ -95,7 +88,7 @@ intT :: Parser ExprType
 intT = do
   _ <- reserved "int"
   return IntType
-  
+
 varT :: Parser ExprType
 varT = do
   _ <- reserved "var"
@@ -126,7 +119,7 @@ true :: Parser Expr
 true = do
   reserved "true"
   return $ Bool True
-  
+
 false :: Parser Expr
 false = do
   reserved "false"
@@ -158,9 +151,9 @@ function  = do
   funcType' <- optionMaybe exprType
   let funcType = fromMaybe VoidType funcType'
   name     <- identifier
-  args     <- parens $ commaSep (definition funcTypes)
+  args'     <- optionMaybe $ parens $ commaSep (definition funcTypes)
+  let args = fromMaybe [] args'
   body     <- do
-    reserved "="
     block'   <- optionMaybe block
     case block' of
       Just codeBlock' -> return codeBlock'
@@ -197,7 +190,7 @@ ifelse  = do
     try expr
     <|> try ifelse
   return $ If cond tr (fromMaybe (Block []) fl)
-  
+
 while :: Parser Expr
 while = do
   reserved "while"
