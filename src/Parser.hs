@@ -76,6 +76,7 @@ exprType :: Parser ExprType
 exprType
    =  try funcTypes
   <|> try voidT
+  <|> try varT
   
 funcTypes :: Parser ExprType
 funcTypes
@@ -90,11 +91,15 @@ funcT = parens $ do
     reserved "->"
     CallableType fromTypes <$> exprType
 
-
 intT :: Parser ExprType
 intT = do
   _ <- reserved "int"
   return IntType
+  
+varT :: Parser ExprType
+varT = do
+  _ <- reserved "var"
+  return AutoType
 
 floatT :: Parser ExprType
 floatT = do

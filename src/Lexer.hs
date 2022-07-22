@@ -20,7 +20,7 @@ lexer = Tok.makeTokenParser style
     , Tok.reservedOpNames = ops
     }
     types = ["int", "void", "bool", "float"]
-    keywords = ["if", "else", "return", "->", "while", "for", "true", "false"]
+    keywords = ["if", "else", "return", "->", "while", "for", "true", "false", "var"]
     punctuation = [";", ",", "{", "}", "(", ")"]
 
 integer     :: Parser Integer

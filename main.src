@@ -1,5 +1,7 @@
- main() = {
+main() = {
+   a = "hello!";
 
+   a = 2;
 }
 
 
