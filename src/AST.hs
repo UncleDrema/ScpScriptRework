@@ -18,7 +18,7 @@ data ExprType
     | AutoType
     | CallableType [ExprType] ExprType
     deriving (Eq)
-    
+
 canBeArgs :: ExprType -> Bool
 canBeArgs VoidType = False
 canBeArgs AutoType = False
@@ -62,7 +62,7 @@ data Expr
     | TopDecl ExprType Name [Expr]
     | While Expr Expr
     deriving (Eq, Show)
-    
+
 ending :: Expr -> String
 ending (If _ then' _) = if isBlock then' then "" else ";"
 ending (While _ block') = if isBlock block' then "" else ";"
@@ -160,6 +160,7 @@ instance Pretty Expr where
               (Def _ name'') -> name''
               _ -> ""
         (Return e)                    -> [joinSpaces ("return" : prettify e)]
+        (BinaryOp "." expr1 expr2)    -> addToLast (prettify expr1) "." ++ prettify expr2
         (BinaryOp "=" expr1 expr2)    -> joinOrSplit (addToLast (prettify expr1) " =") expr2
         (BinaryOp op expr1 expr2)    -> joinOrSplit (addToLast (prettify expr1) (" " ++ op)) expr2
         (If cond thenBlock elseBlock) -> header ++ blocks

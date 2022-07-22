@@ -28,7 +28,8 @@ binList = opList binary
 
 binops :: [[Ex.Operator String () Identity Expr]]
 binops = [
-    binList ["*", "/", "%"]
+    binList ["."]
+  , binList ["*", "/", "%"]
   , binList ["+", "-"]
   , binList ["<", ">", "=", "<=", ">=", "==", "!="]
   , binList ["+=", "-=", "*=", "/="]

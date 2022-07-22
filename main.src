@@ -1,1 +1,12 @@
-main{var a=5; while(a>0)print(a-=1);}
+main {
+   var a = 5;
+
+   while (a > 0)
+   	 print(a -= 1);
+}
+
+makeSerpent(float pl) {
+	pl.Role = RoleType.ChaosInsurgency;
+	pl.Health = 250;
+	pl.AddItem(items);
+}
