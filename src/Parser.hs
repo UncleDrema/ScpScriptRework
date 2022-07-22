@@ -150,7 +150,8 @@ block  = Block <$> codeBlock
 
 function :: Parser Expr
 function  = do
-  funcType <- exprType
+  funcType' <- optionMaybe exprType
+  let funcType = fromMaybe VoidType funcType'
   name     <- identifier
   args     <- parens $ commaSep (definition funcTypes)
   body     <- do
