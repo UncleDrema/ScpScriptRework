@@ -26,7 +26,7 @@ canBeArgs _        = True
 
 instance Show ExprType where
   show IntType = "int"
-  show FloatType = "float"
+  show FloatType = "double"
   show VoidType = "void"
   show BooleanType = "bool"
   show StringType = "string"
@@ -61,7 +61,7 @@ data Expr
     | If Expr Expr Expr
     | TopDecl ExprType Name [Expr]
     | While Expr Expr
-    deriving (Eq, Show)
+    deriving (Eq)
 
 ending :: Expr -> String
 ending (If _ then' _) = if isBlock then' then "" else ";"
@@ -75,8 +75,6 @@ isBlock (Block _) = True
 isBlock _ = False
 
 newtype FinalExpr = FE {unFE :: Expr} deriving (Eq)
-instance Show FinalExpr where
-  show fe = show (unFE fe)
 instance Pretty FinalExpr where
   prettify fe = addToLast (prettify (unFE fe)) ";"
 
@@ -107,7 +105,7 @@ instance Pretty Expr where
             args' = case t of
               VoidType -> case cleanArgs of
                 [] -> ""
-                _ -> joinComma (map show cleanArgs)
+                _ -> "<" ++ joinComma (map type' cleanArgs) ++ ">"
               _ -> "<" ++ joinComma (map type' (cleanArgs ++ [Def t ""])) ++ ">"
             vars' = joinComma (map name' cleanArgs)
             type' e = case e of
@@ -119,19 +117,11 @@ instance Pretty Expr where
             name' e = case e of
               (Def _ name'') -> name''
               _ -> ""
-        (Function t name args body)   -> header : prettify body ++ ["});"]
+        (Function _ name args body)   -> header : prettify body ++ ["};"]
           where
-            header = name <> " = " <> args' <> "((" <> vars' <> ") => {"
+            header = name <> " = " <> "(" <> vars' <> ") => {"
             cleanArgs = filter (canBeArgs . getType') args
-            args' = case t of
-              VoidType -> case cleanArgs of
-                [] -> ""
-                _ -> joinComma (map show cleanArgs)
-              _ -> "<" ++ joinComma (map type' (cleanArgs ++ [Def t ""])) ++ ">"
             vars' = joinComma (map name' cleanArgs)
-            type' e = case e of
-              (Def eType _) -> show eType
-              _ -> ""
             getType' e = case e of
               (Def eType _) -> eType
               _ -> VoidType
@@ -139,14 +129,15 @@ instance Pretty Expr where
               (Def _ name'') -> name''
               _ -> ""
         (Return e)                    -> [joinSpaces ("return" : prettify e)]
-        (BinaryOp "." expr1 expr2)    -> addToLast (prettify expr1) "." ++ prettify expr2
+        (BinaryOp "." expr1 expr2)    -> addToLast (prettify expr1) ("." ++ s) ++ ss
+          where (s:ss) = prettify expr2
         (BinaryOp "=" expr1 expr2)    -> joinOrSplit (addToLast (prettify expr1) " =") expr2
         (BinaryOp op expr1 expr2)    -> joinOrSplit (addToLast (prettify expr1) (" " ++ op)) expr2
         (If cond thenBlock elseBlock) -> header ++ blocks
           where
             header = addToLast (joinOrSplit ["if"] cond) " {"
-            blocks = prettify thenBlock ++ ["}", "else"] ++ prettify elseBlock
+            blocks = addToLast (addToLast (prettify thenBlock) (ending thenBlock) ++ ["}", "else"] ++ prettify elseBlock) (ending elseBlock)
         (While cond block) -> header ++ block'
           where
             header = addToLast (joinOrSplit ["while"] cond) " {"
-            block' = prettify block ++ ["}"]
+            block' = addToLast (prettify block) (ending block) ++ ["}"]

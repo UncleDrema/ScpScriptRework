@@ -8,7 +8,7 @@ module Pretty
   , ByShow(..)
   ) where
 
-class Show e => Pretty e where
+class Pretty e where
     prettify :: e -> [String]
 
 newtype ByShow s = BS { unBS :: s }

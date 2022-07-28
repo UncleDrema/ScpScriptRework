@@ -1,12 +1,18 @@
-main {
+void main() {
    var a = 5;
 
    while (a > 0)
    	 print(a -= 1);
 }
 
-makeSerpent(float pl) {
+void makeSerpent(float pl) {
+	print(pl);
 	pl.Role = RoleType.ChaosInsurgency;
-	pl.Health = 250;
-	pl.AddItem(items);
+	//pl.Health = 250;
+	//pl.AddItem(items);
+}
+
+
+float uniform01() {
+	return nextBounds(-100, 100) / 100.0;
 }
