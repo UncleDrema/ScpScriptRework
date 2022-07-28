@@ -86,27 +86,6 @@ prettifyAST  = map (joinLines . prettify)
 joinedPrettyAST :: Pretty e => [e] -> String
 joinedPrettyAST  = joinLines . prettifyAST
 
-{--  Pretty big
-instance Pretty Expr where
-    prettify expr = case expr of
-        (Int i)                       -> [joinSpaces ["Int", show i]]
-        (Float f)                     -> [joinSpaces ["Float", show f]]
-        (String s)                    -> [joinSpaces ["String", show s]]
-        (Var name)                    -> [joinSpaces ["Var", name]]
-        (Def exprType name)           -> [joinSpaces ["Def", show exprType, name]]
-        (Block codeBlock)             -> smartJoin ("Block {" : prettify codeBlock ++ ["}"])
-        (Call name exprs)             -> smartJoin (joinSpaces ["Call", name, "("] : prettify exprs ++ [")"])
-        (Function t name args body)   -> header : prettify body ++ ["}"]
-          where
-            header = joinSpaces ["Function ", show name, show t, "; args", show args, "{"]
-        (Return e)                    -> [joinSpaces ["Return", show e]]
-        (BinaryOp op expr1 expr2)     -> joinOrSplit (joinOrSplit ["BinaryOp " ++ op] expr1) expr2
-        (If cond thenBlock elseBlock) -> header ++ blocks
-          where
-            header = addToLast (joinOrSplit ["If"] cond) " {"
-            blocks = prettify thenBlock ++ ["}", "else {"] ++ prettify elseBlock ++ ["}"]
---}
-
 -- Pretty C#
 instance Pretty Expr where
     prettify expr = case expr of
@@ -138,7 +117,7 @@ instance Pretty Expr where
               (Def eType _) -> eType
               _ -> VoidType
             name' e = case e of
-              (Def _ name) -> name
+              (Def _ name'') -> name''
               _ -> ""
         (Function t name args body)   -> header : prettify body ++ ["});"]
           where
@@ -171,24 +150,3 @@ instance Pretty Expr where
           where
             header = addToLast (joinOrSplit ["while"] cond) " {"
             block' = prettify block ++ ["}"]
---}
-
-{-- Pretty C-like
-instance Pretty Expr where
-    prettify expr = case expr of
-        (Int i)                       -> [joinSpaces [show i]]
-        (Float f)                     -> [joinSpaces [show f]]
-        (Var name)                    -> [joinSpaces [name]]
-        (Def exprType name)           -> [joinSpaces [show exprType, name]]
-        (Block codeBlock)             -> smartJoin ("{" : prettify codeBlock ++ ["}"])
-        (Call name exprs)             -> smartJoin ([name, "("] ++ prettify exprs ++ [")"])
-        (Function t name args body)   -> header : prettify body ++ ["}"]
-          where
-            header = joinSpaces ([show t, show name] ++ ["("] ++ prettify args ++ ["){"])
-        (Return e)                    -> [joinSpaces ("return" : prettify e)]
-        (BinaryOp op expr1 expr2)     -> joinOrSplit (joinOrSplit [] expr1 ++ [op]) expr2
-        (If cond thenBlock elseBlock) -> header ++ blocks
-          where
-            header = addToLast (joinOrSplit ["if"] cond) " {"
-            blocks = prettify thenBlock ++ ["}", "else {"] ++ prettify elseBlock ++ ["}"]
---}
