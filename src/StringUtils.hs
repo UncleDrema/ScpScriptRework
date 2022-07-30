@@ -25,10 +25,8 @@ addToLast [s] str               = [s ++ str]
 addToLast (reverse -> s:ss) str = reverse ss ++ [s ++ str]
 addToLast strs str              = init strs ++ [last strs ++ str]
 
-smartJoin :: [String] -> [String]
-smartJoin strs = if sum (map length strs) < 40
-  then [joinSpaces (filter (not . null) $ map (dropWhile isSpace) strs)]
-  else strs
+filterEmpty :: [String] -> [String]
+filterEmpty strs = filter (not . null) $ map (dropWhile isSpace) strs
 
 -- ident list of something
 joinOrSplit :: Pretty a => [String] -> a -> [String]

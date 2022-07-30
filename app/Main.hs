@@ -18,7 +18,7 @@ main = do
     _          -> putStrLn "Provide one file name!"
 
 processAst :: AST -> AST
-processAst ast = mapMaybe getDecl ast ++ ast
+processAst ast = mapMaybe getDecl ast ++ [ExecuteBuiltin (map FE ast)]
 
 getDecl :: Expr -> Maybe Expr
 getDecl (Function t name args _) = Just (TopDecl t name args)

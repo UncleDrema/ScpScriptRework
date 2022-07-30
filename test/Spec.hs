@@ -33,14 +33,6 @@ utilsTests  = testGroup "StringUtils tests"
         , testCase "Adding empty to last"      $ addToLast ["hey", "hello"] "" @?= ["hey", "hello"]
         , testCase "Adding to one element"     $ addToLast ["hel"] "lo"         @?= ["hello"]
         ]
-    , testGroup "smartJoin tests" [
-          testCase "joining len <40 no white"  $ smartJoin ["hey", "hello", "what?"]           @?= ["hey hello what?"]
-        , testCase "joining len <40 has white" $ smartJoin ["hey", "  ", "hello", "", "what?"] @?= ["hey hello what?"]
-        , testCase "joining len > 40 no white"
-            $ smartJoin [replicate 20 'f', "hey", replicate 30 'g']       @?= [replicate 20 'f', "hey", replicate 30 'g']
-        , testCase "joining len > 40 no white"
-            $ smartJoin [replicate 20 'f', "  ", "hey", replicate 30 'g'] @?= [replicate 20 'f', "  ", "hey", replicate 30 'g']
-        ]
     , testGroup "joinOrSplit tests" [
           testCase "Adding one to empty" $ joinOrSplit [] (BS "braces") @?= ["(braces)"]
         , testCase "Adding to one elem" $ joinOrSplit ["yes"] (BS "no") @?= ["yes (no)"]

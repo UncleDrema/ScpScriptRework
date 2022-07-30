@@ -48,12 +48,20 @@ factor  =  try block
        <|> try string'
        <|> try call
        <|> try (definition exprType)
+       <|> try dot
        <|> try variable
        <|> try ifelse
        <|> parens expr
        <|> true
        <|> false
        <|> while
+       
+dot :: Parser Expr
+dot = do
+  from <- variable
+  reservedOp "."
+  to <- variable
+  return $ Dot from to
 
 contents :: Parser a -> Parser a
 contents p = do

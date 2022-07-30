@@ -6,7 +6,6 @@ import StringUtils
 import Pretty
 
 type Name = String
-type CodeBlock term = [term]
 type AST = [Expr]
 
 data ExprType
@@ -53,7 +52,7 @@ data Expr
     | Bool Bool
     | String String
     | Def ExprType Name
-    | Block (CodeBlock FinalExpr)
+    | Block [FinalExpr]
     | Call Name [Expr]
     | Function ExprType Name [Expr] Expr
     | BinaryOp String Expr Expr
@@ -61,6 +60,9 @@ data Expr
     | If Expr Expr Expr
     | TopDecl ExprType Name [Expr]
     | While Expr Expr
+    | Dot Expr Expr
+    | Parens Expr
+    | ExecuteBuiltin [FinalExpr]
     deriving (Eq)
 
 ending :: Expr -> String
@@ -79,7 +81,7 @@ instance Pretty FinalExpr where
   prettify fe = addToLast (prettify (unFE fe)) ";"
 
 prettifyAST :: Pretty e => [e] -> [String]
-prettifyAST  = map (joinLines . prettify)
+prettifyAST  = filterEmpty . map (joinLines . prettify)
 
 joinedPrettyAST :: Pretty e => [e] -> String
 joinedPrettyAST  = joinLines . prettifyAST
@@ -87,37 +89,36 @@ joinedPrettyAST  = joinLines . prettifyAST
 -- Pretty C#
 instance Pretty Expr where
     prettify expr = case expr of
+        (ExecuteBuiltin exprs)        -> "public static void Execute()" : prettify (Block exprs)
+        (Parens e)                    -> "(" : prettify e ++ [")"]
+        (Dot from to)                 -> addToLast (prettify from) ("." ++ t) ++ ts
+            where (t:ts) = prettify to
         (Int i)                       -> [show i]
-        (Float f)                     -> [show f]
+        (Float f)                     -> [show f ++ "f"]
         (Var name)                    -> [name]
         (Bool b)                      -> [if b then "true" else "false"]
         (String s)                    -> [show s]
         (Def exprType name)           -> [joinSpaces [show exprType, name]]
-        (Block codeBlock)             -> smartJoin ("{" : prettify codeBlock ++ ["}"])
-        (Call name exprs)             -> smartJoin ([name, "("] ++ [joinComma (map (joinSpaces . prettify) exprs)] ++ [")"])
-        (TopDecl t name args)         -> header : [body, "});"]
+        (Block codeBlock)             -> map (" " ++ ) ("{" : prettify codeBlock ++ ["}"])
+        (Call name exprs)             -> [name ++ "(" ++ joinComma (map (joinSpaces . prettify) exprs) ++ ")"]
+        (TopDecl t name args)         -> [joinSpaces ["public static", delegate <> args',  name <> ";"]]
           where
-            header = "var " <> name <> " = new " <> delegate <> args' <> "((" <> vars' <> ") => {"
-            (delegate, body) = case t of
-              VoidType -> ("Action", "")
-              _ -> ("Func", "return default;")
+            delegate = case t of
+              VoidType -> "Action"
+              _ -> "Func"
             cleanArgs = filter (canBeArgs . getType') args
             args' = case t of
               VoidType -> case cleanArgs of
                 [] -> ""
                 _ -> "<" ++ joinComma (map type' cleanArgs) ++ ">"
               _ -> "<" ++ joinComma (map type' (cleanArgs ++ [Def t ""])) ++ ">"
-            vars' = joinComma (map name' cleanArgs)
             type' e = case e of
               (Def eType _) -> show eType
               _ -> ""
             getType' e = case e of
               (Def eType _) -> eType
               _ -> VoidType
-            name' e = case e of
-              (Def _ name'') -> name''
-              _ -> ""
-        (Function _ name args body)   -> header : prettify body ++ ["};"]
+        (Function _ name args body)   -> header : prettify body ++ ["}"]
           where
             header = name <> " = " <> "(" <> vars' <> ") => {"
             cleanArgs = filter (canBeArgs . getType') args
@@ -139,5 +140,5 @@ instance Pretty Expr where
             blocks = addToLast (addToLast (prettify thenBlock) (ending thenBlock) ++ ["}", "else"] ++ prettify elseBlock) (ending elseBlock)
         (While cond block) -> header ++ block'
           where
-            header = addToLast (joinOrSplit ["while"] cond) " {"
-            block' = addToLast (prettify block) (ending block) ++ ["}"]
+            header = joinOrSplit ["while"] cond
+            block' = addToLast (prettify block) (ending block)
